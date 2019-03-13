@@ -29,8 +29,8 @@ bool DataBlock::Parse()
 
     do
     {
-        uint32_t fspec = GetFSPEC();
-        if(0 == fspec)
+        std::vector<uint8_t> fspec = GetFSPEC();
+        if(fspec.empty())
             return true;
 
         DataRecord data_record(fspec, data_begin_, record_len_);
@@ -70,22 +70,18 @@ bool DataBlock::GetDataRecordLen()
     return true;
 }
 //---------------------------------------------------------------------------
-uint32_t DataBlock::GetFSPEC()
+std::vector<uint8_t> DataBlock::GetFSPEC()
 {
-    uint32_t fspec = 0;
+    std::vector<uint8_t> fspec;
+
     uint8_t byte;
-    for(size_t i=0; i<4; i++)
+    do
     {
         byte = *data_begin_;
-        uint32_t tmp = byte;
-        tmp = tmp << (i*8);
-        fspec += tmp;
+        fspec.push_back(byte);
         data_begin_++;
         record_len_--;
-    
-        if(!CheckFSPECEnd(byte))
-            break;
-    }
+    }while(CheckFSPECEnd(byte));
 
     return fspec;
 }

@@ -33,9 +33,10 @@ int main(int argc, char* argv[])
         std::cout << "没有正确的数据包" << std::endl;
     }
 
-    std::string bin = "15001CFDA011110020325E6500563F5B01278B707805B902780800A0";
+    std::string bin = 
+        "150030ffa1db82ffff0121392304005d1555013347f678102e11e4000748047201a407c18f810d33b6d31d60000000ac";
     base::MemoryBlock mb = base::StringToBin(reinterpret_cast<const unsigned char*>(bin.data()), bin.size());
-    //std::vector<char> block(begin, data.data()+data.size());
+    std::cout << "bin:" << base::BinToString(reinterpret_cast<const unsigned char*>(mb.dat()), mb.len()) << std::endl;;
     std::vector<char> block(mb.dat(), mb.dat()+mb.len());
     core::DataBlock data_block(std::move(block));
     if(false == data_block.Parse())

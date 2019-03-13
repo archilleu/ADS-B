@@ -3,7 +3,6 @@
 #define CORE_DATA_BLOCK_H_
 //---------------------------------------------------------------------------
 #include <vector>
-#include <list>
 #include <cstdint>
 //---------------------------------------------------------------------------
 namespace core
@@ -20,7 +19,7 @@ private:
     bool VerifyCAT();
     bool GetDataRecordLen();
 
-    uint32_t GetFSPEC();
+    std::vector<uint8_t> GetFSPEC();
     bool CheckFSPECEnd(char fspec);
 
 private:
