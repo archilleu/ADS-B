@@ -1,7 +1,6 @@
 //---------------------------------------------------------------------------
 #include <arpa/inet.h>
 #include "data_block.h"
-#include "data_record.h"
 //---------------------------------------------------------------------------
 namespace core
 {
@@ -37,7 +36,7 @@ bool DataBlock::Parse()
         data_begin_ = data_record.ParseRecord();
         if(nullptr == data_begin_)
             return false;
-
+        records_.push_back(data_record);
     }while(data_end_!=data_begin_);
 
     return true;

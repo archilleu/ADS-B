@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <vector>
 #include <functional>
+#include "item.h"
 //---------------------------------------------------------------------------
 namespace core
 {
@@ -15,15 +16,8 @@ public:
     DataRecord(std::vector<uint8_t>& fspec, char* data_begin, size_t data_block_len);
     char* ParseRecord();
 
-public:
-    const uint8_t DataSourceIdentification  = 0x01;
-    const uint8_t TargetReportDescriptor    = 0x02;
-    const uint8_t TimeOfDay                 = 0x04;
-    const uint8_t PositionWSG84             = 0x08;
-    const uint8_t TargetAddress             = 0x10;
-    const uint8_t GeometricAltitude         = 0x20;
-    const uint8_t FigureOfMerit             = 0x40;
-    const uint8_t FieldExtensionIndicator   = 0x80;
+    const Item& get_item() const { return item_; }
+    Item& get_item() { return item_; };
 
 private:
     bool ParseDataSourceIdentification();
@@ -68,6 +62,8 @@ private:
     void InitLocalZeroTime();
 
 private:
+    Item item_;
+
     std::vector<uint8_t> fspec_;
     char* data_begin_;
     size_t data_block_len_;
@@ -92,6 +88,13 @@ private:
     const static uint16_t LSB_RATE_OF_TURN = 4;
     const static uint16_t LSB_TIME_OF_DAY_ACCURACY = 256;
     const static uint16_t LSB_TEMPERATURE = 4;
+    const static uint16_t LSB_ISS_ALTITUDE = 25;
+    const static uint16_t LSB_FSS_ALTITUDE = 25;
+
+    //英尺=》米
+    constexpr const static float FEET_PER_M = 0.3048f;
+    constexpr const static float FEET_PER_CM = 30.48f;
+    constexpr const static float KNOT_PER_KMH  = 1.852f;
 };
 
 }//namespace core

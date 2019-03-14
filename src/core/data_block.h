@@ -4,6 +4,7 @@
 //---------------------------------------------------------------------------
 #include <vector>
 #include <cstdint>
+#include "data_record.h"
 //---------------------------------------------------------------------------
 namespace core
 {
@@ -14,6 +15,8 @@ public:
     DataBlock(std::vector<char>&& data);
 
     bool Parse();
+
+    const std::vector<DataRecord>& records() { return records_; }
 
 private:
     bool VerifyCAT();
@@ -30,8 +33,9 @@ private:
     uint16_t record_len_;
     char* data_begin_;
     char* data_end_;
-};
 
+    std::vector<DataRecord> records_;
+};
 
 }//namespace core
 //---------------------------------------------------------------------------

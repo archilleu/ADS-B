@@ -44,6 +44,11 @@ int main(int argc, char* argv[])
         std::cout << "解析失败" << std::endl;
     }
 
+    for(auto record : data_block.records())
+    {
+        std::cout << record.get_item().ToString() << std::endl;
+    }
+
     return 0;
 }
 //---------------------------------------------------------------------------
