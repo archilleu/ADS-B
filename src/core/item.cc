@@ -84,6 +84,15 @@ std::string Item::ToString() const
     FSS_altitude["aproach_mode"] = FSS_altitude_.aproach_mode;
     value["FSS_altitude"] = FSS_altitude;
 
+    json::Value trajectory_intent(json::Value::OBJECT);
+    json::Value trajectory_intent_status(json::Value::OBJECT);
+    trajectory_intent_status["nav"] = trajectory_intent_.intent_status.nav;
+    trajectory_intent_status["nvb"] = trajectory_intent_.intent_status.nvb;
+    trajectory_intent["intent_status"] = trajectory_intent_status;
+    value["trajectory_intent"] = trajectory_intent;
+
+    value["Mode3_ACodeinOctalRepresentation"] = base::BinToString(mode3_, sizeof(mode3_));;
+
     value["signal_ampltitude"] = signal_ampltitude_;
 
     std::string result = json::JsonWriter(value).ToString(true);

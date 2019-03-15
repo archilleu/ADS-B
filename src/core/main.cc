@@ -1,42 +1,16 @@
 //---------------------------------------------------------------------------
 #include <iostream>
+#include <fstream>
 #include <vector>
+#include <cstdio>
+#include <cassert>
 #include "../base/function.h"
 #include "../base/memory_block.h"
 #include "data_block.h"
 //---------------------------------------------------------------------------
-int main(int argc, char* argv[])
+void DoAction(char* data, int len)
 {
-    (void)argc;
-    (void)argv;
-
-    std::vector<char> data;
-    const std::string path = "/home/archilleu/workspace/absd/ADS-B/test/file/data.bin";
-    if(false == base::LoadFile(path, &data))
-        return -1;
-
-    uint8_t sign = 0x15;
-    char* begin = nullptr;
-    for(size_t i=0; i<data.size(); i++)
-    {
-        if(data[i] == sign)
-        {
-            if(data[i+1] != 0)
-            {
-                begin = data.data() + i;
-                break;
-            }
-        }
-    }
-    if(nullptr == begin)
-    {
-        std::cout << "没有正确的数据包" << std::endl;
-    }
-
-    std::string bin = 
-        "150030ffa1db82ffff0121392304005d1555013347f678102e11e4000748047201a407c18f810d33b6d31d60000000ac";
-    base::MemoryBlock mb = base::StringToBin(reinterpret_cast<const unsigned char*>(bin.data()), bin.size());
-    std::cout << "bin:" << base::BinToString(reinterpret_cast<const unsigned char*>(mb.dat()), mb.len()) << std::endl;;
+    base::MemoryBlock mb = base::StringToBin(reinterpret_cast<const unsigned char*>(data), len);
     std::vector<char> block(mb.dat(), mb.dat()+mb.len());
     core::DataBlock data_block(std::move(block));
     if(false == data_block.Parse())
@@ -46,8 +20,82 @@ int main(int argc, char* argv[])
 
     for(auto record : data_block.records())
     {
-        std::cout << record.get_item().ToString() << std::endl;
+        std::string result = record.get_item().ToString();
+        std::cout << result << std::endl;
+        std::ofstream out("ads-b.txt", std::ios::app);
+        out << result << "\r\n";
+
     }
+}
+int main(int argc, char* argv[])
+{
+    (void)argc;
+    (void)argv;
+
+    const char* path = "/home/archilleu/workspace/absd/ADS-B/test/file/adsb.txt";
+    FILE* fp = fopen(path, "r");
+    if(nullptr == fp)
+    {
+        std::cout << "读取文件失败" << std::endl;
+        return -1;
+    }
+
+    char line[1024];
+    char buffer[1024];
+    char data[1024];
+    int prefix = 10;
+    int idx = 0;
+    while(!feof(fp))
+    {
+        fgets(line, sizeof(line), fp);
+        if('\t' != line[0])
+        {
+            if(0 == idx)
+                continue;
+
+            int true_len = 0;
+            for(int i=0,j=0; i<idx; i++)
+            {
+                if(' ' == buffer[i])
+                    continue;
+
+                data[j++] = buffer[i];
+                true_len++;
+            }
+            std::cout << "len:" << true_len << " data:" << data << std::endl;
+            DoAction(data, true_len);
+            idx = 0;
+            continue;
+        }
+        else
+        {
+            if(0 == idx)
+            {
+                char* begin = strstr(line, "1500");
+                if(nullptr == begin)
+                    continue;
+
+                char* end = strstr(line, "\n");
+                assert(end);
+
+                auto size = static_cast<int>(end - begin);
+                memcpy(buffer, begin, size);
+                idx += size;
+            }
+            else
+            {
+                char* begin = line + prefix;
+                char* end = strstr(line, "\n");
+                auto size = static_cast<int>(end - begin);
+                memcpy(buffer+idx, begin, size);
+                idx += size;
+            }
+        }
+
+    }
+
+    fclose(fp);
+
 
     return 0;
 }

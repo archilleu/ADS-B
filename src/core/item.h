@@ -99,6 +99,21 @@ public:
         float  altitude; // 单位m
     }FSS_altitude_;
 
+    struct TrajectoryIntent
+    {
+        struct
+        {
+            bool nav;
+            bool nvb;
+        }intent_status;
+        
+        struct
+        {
+        }intent_data;
+    }trajectory_intent_;
+
+    uint8_t mode3_[2]; 
+
     uint8_t signal_ampltitude_;
 };
 

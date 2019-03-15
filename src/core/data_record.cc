@@ -619,14 +619,58 @@ bool DataRecord::ParseFinalStateSelectedAltitude()
 bool DataRecord::ParseTrajectoryIntent()
 {
     //110
-    assert(0);
+    if((record_len_+sizeof(uint8_t)) > data_block_len_)
+        return false;
+
+    uint8_t intent;
+    memcpy(reinterpret_cast<char*>(&intent), data_begin_, sizeof(uint8_t));
+    record_len_ += sizeof(uint8_t);
+    data_begin_ += sizeof(uint8_t);
+
+    if(intent & 0x80)
+    {
+        assert(intent & 0x01);
+
+        if((record_len_+sizeof(uint8_t)) > data_block_len_)
+            return false;
+
+        uint8_t intent_status;
+        memcpy(reinterpret_cast<char*>(&intent_status), data_begin_, sizeof(uint8_t));
+
+        if(intent_status & 0x80)
+        {
+            item_.trajectory_intent_.intent_status.nav = true;
+        }
+        if(intent_status & 0x40)
+        {
+            item_.trajectory_intent_.intent_status.nvb = true;
+        }
+
+        record_len_ += sizeof(uint8_t);
+        data_begin_ += sizeof(uint8_t);
+
+    }
+    if(intent & 0x40)
+    {
+        assert(intent & 0x01);
+        assert(0);
+    }
+
     return true;
 }
 //---------------------------------------------------------------------------
 bool DataRecord::ParseMode3_ACodeinOctalRepresentation()
 {
     //070
-    assert(0);
+    uint8_t buf[2];
+    if((record_len_+sizeof(buf)) > data_block_len_)
+        return false;
+
+    memcpy(buf, data_begin_, sizeof(buf));
+    memcpy(item_.mode3_, buf, sizeof(buf));
+
+    record_len_ += sizeof(buf);
+    data_begin_ += sizeof(buf);
     return true;
 }
 //---------------------------------------------------------------------------
