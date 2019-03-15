@@ -22,9 +22,12 @@ void DoAction(char* data, int len)
     {
         std::string result = record.get_item().ToString();
         std::cout << result << std::endl;
+
         std::ofstream out("ads-b.txt", std::ios::app);
         out << result << "\r\n";
 
+        std::ofstream out_abs("ads-b-abstract.txt", std::ios::app);
+        out_abs << record.get_item().ToStringBstract() << "\r\n";
     }
 }
 int main(int argc, char* argv[])

@@ -16,6 +16,7 @@ public:
     Item();
 
     std::string ToString() const;
+    std::string ToStringBstract() const;
 
 public:
     struct DataSourceIdentification

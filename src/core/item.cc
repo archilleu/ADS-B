@@ -99,6 +99,21 @@ std::string Item::ToString() const
     return result;
 }
 //---------------------------------------------------------------------------
+std::string Item::ToStringBstract() const
+{
+    json::Value value(json::Value::OBJECT);
+    char tmp[64];
+    strftime(tmp, sizeof(tmp), "%Y-%m-%d %H:%M:%S", localtime(&time_of_day_));
+    value["time_of_day"] =  tmp;
+
+    value["latitude"] = latitude_;
+    value["longitude"] = longitude_;
+    value["geometric_altitude(m)"] = geometric_altitude_m_;
+    value["roll_angel(degree)"] = roll_angle_;
+    std::string result = json::JsonWriter(value).ToString(true);
+    return result;
+}
+//---------------------------------------------------------------------------
 
 }//namespace core
 //---------------------------------------------------------------------------
