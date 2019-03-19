@@ -129,6 +129,7 @@ bool DataRecord::ParseTimeOfDay()
     memcpy(reinterpret_cast<char*>(&elapsed)+1, data_begin_, 3);
     elapsed = ntohl(elapsed) / LSB_TIME;
     item_.time_of_day_ = zero_time_ + elapsed;
+    item_.elapsed_ = elapsed;
 
     record_len_ += 3;
     data_begin_ += 3;
@@ -360,7 +361,7 @@ bool DataRecord::ParseGrounVector()
     int16_t ground_speed;
     memcpy(reinterpret_cast<char*>(&ground_speed), data_begin_, sizeof(int16_t));
     ground_speed = be16toh(ground_speed);
-    item_.ground_speed_ = static_cast<float>(ground_speed) / LSB_GROUND_SPEED;
+    item_.ground_speed_ = static_cast<float>(ground_speed) / LSB_GROUND_SPEED * KNOT_PER_KMH * 60*60;
 
     uint16_t track_angle;
     memcpy(reinterpret_cast<char*>(&track_angle), data_begin_+sizeof(uint16_t), sizeof(uint16_t));

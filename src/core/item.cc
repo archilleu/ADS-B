@@ -52,7 +52,7 @@ std::string Item::ToString() const
     value["barometirc_vertical_rate(cm/min)"] = barometirc_vertical_rate_;
     value["geometric_vertical_rate(cm/min)"] = geometric_vertical_rate_;
 
-    value["ground_speed(NM/s)"] = ground_speed_;
+    value["ground_speed(KM/h)"] = ground_speed_;
     value["track_angle(°)"] = track_angle_;
 
     value["target_identification"] = base::BinToString(target_identification_, sizeof(target_identification_));
@@ -95,7 +95,7 @@ std::string Item::ToString() const
 
     value["signal_ampltitude"] = signal_ampltitude_;
 
-    std::string result = json::JsonWriter(value).ToString(true);
+    std::string result = json::JsonWriter(value).ToString(false);
     return result;
 }
 //---------------------------------------------------------------------------
@@ -112,6 +112,21 @@ std::string Item::ToStringBstract() const
     value["roll_angel(degree)"] = roll_angle_;
     std::string result = json::JsonWriter(value).ToString(true);
     return result;
+}
+//---------------------------------------------------------------------------
+json::Value Item::ToMshtFormat() const
+{
+    json::Value value(json::Value::OBJECT);
+    value["userId"] = base::BinToString(target_address_, sizeof(target_address_));;
+    value["track"] = 1;
+    value["latitude"] = latitude_;
+    value["longitude"] = longitude_;
+    value["altitude"] = geometric_altitude_m_;
+    value["speed"] = ground_speed_;;
+    value["course"] = track_angle_;
+    value["src"] = "ADS-B";
+
+    return value;
 }
 //---------------------------------------------------------------------------
 

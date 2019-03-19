@@ -6,6 +6,7 @@
 #include <string>
 #include <cstdint>
 #include <time.h>
+#include "../base/value.h"
 //---------------------------------------------------------------------------
 namespace core
 {
@@ -17,6 +18,7 @@ public:
 
     std::string ToString() const;
     std::string ToStringBstract() const;
+    json::Value ToMshtFormat() const;
 
 public:
     struct DataSourceIdentification
@@ -28,6 +30,7 @@ public:
     uint8_t target_report_desc_[2];
 
     time_t time_of_day_;
+    int elapsed_;
 
     float latitude_;
     float longitude_;

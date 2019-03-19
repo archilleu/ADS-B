@@ -54,7 +54,7 @@ message(STATUS "INSTALL PATH = " ${EXECUTABLE_OUTPUT_PATH} " and " ${LIBRARY_OUT
 #add subdirectory
 #add_subdirectory(<dir>)
 add_subdirectory(src)
-#add_subdirectory(test)
+add_subdirectory(test)
 #---------------------------------------------------------------------------
 #add test
 #set(TESTBASE test_base)
