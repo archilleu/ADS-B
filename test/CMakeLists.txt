@@ -6,7 +6,7 @@ cmake_minimum_required (VERSION 2.8)
 aux_source_directory(. DIR_TESTS)
 #---------------------------------------------------------------------------
 #generate test
-set(TESTBAE test_base)
+set(TESTBAE udp_client)
 add_executable(${TESTBAE} ${DIR_TESTS})
 #---------------------------------------------------------------------------
 #add include path

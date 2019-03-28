@@ -52,7 +52,7 @@ std::string Item::ToString() const
     value["barometirc_vertical_rate(cm/min)"] = barometirc_vertical_rate_;
     value["geometric_vertical_rate(cm/min)"] = geometric_vertical_rate_;
 
-    value["ground_speed(KM/h)"] = ground_speed_;
+    value["ground_speed(KM/h)"] = ground_speed_ * 0.2777778;
     value["track_angle(°)"] = track_angle_;
 
     value["target_identification"] = base::BinToString(target_identification_, sizeof(target_identification_));
@@ -122,7 +122,7 @@ json::Value Item::ToMshtFormat() const
     value["latitude"] = latitude_;
     value["longitude"] = longitude_;
     value["altitude"] = geometric_altitude_m_;
-    value["speed"] = ground_speed_;;
+    value["speed"] = ground_speed_ * 0.2777778;
     value["course"] = track_angle_;
     value["src"] = "ADS-B";
 

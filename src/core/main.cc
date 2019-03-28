@@ -12,20 +12,32 @@
 #include <arpa/inet.h>
 #include <list>
 #include <map>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <stdlib.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include "name.h"
 #include "../base/value.h"
 #include "../base/function.h"
 #include "../base/memory_block.h"
 #include "data_block.h"
 //---------------------------------------------------------------------------
+const static short SRV_UDP_PORT = 6666;
 const static short SRV_PORT = 8088;
+
 //const static char* SRV_IP = "192.168.210.41";
+//const char* host = "http://192.168.210.51:8088/";
 const static char* SRV_IP = "192.168.50.111";
+const char* host = "http://192.168.50.111:8088";
 //---------------------------------------------------------------------------
 std::string PointAdd(const std::string& data)
 {
-    const char* host = "http://192.168.50.111:8088";
-    //const char* host = "http://localhost:8088/";
+    std::cout << "发送到：" << SRV_IP << std::endl;
+
     const char* html = "POST %s/VisualChart/flytrail/add.do HTTP/1.1\r\n"
         "Host: %s\r\n"
         "Cache-Control: no-cache\r\n"
@@ -74,29 +86,46 @@ std::string PointAdd(const std::string& data)
     return json;
 }
 //---------------------------------------------------------------------------
-std::map<std::string, std::list<json::Value>> name_datas;
-//---------------------------------------------------------------------------
 void DoAction(char* data, int len)
 {
-    base::MemoryBlock mb = base::StringToBin(reinterpret_cast<const unsigned char*>(data), len);
-    std::vector<char> block(mb.dat(), mb.dat()+mb.len());
+    std::vector<char> block(data, data+len);
     core::DataBlock data_block(std::move(block));
     if(false == data_block.Parse())
     {
         std::cout << "解析失败" << std::endl;
     }
+    else
+    {
+        std::cout << "解析成功" << std::endl;
+    }
 
     for(auto record : data_block.records())
     {
-        std::string result = record.get_item().ToString();
-        std::cout << result << std::endl;
-
-        std::ofstream out("ads-b.txt", std::ios::app);
-        out << result << "\r\n";
-
         json::Value value = record.get_item().ToMshtFormat();
-        std::string key = value["userId"].val();
-        name_datas[key].push_back(value);
+
+        //修改为当前时间
+        std::string name = value["userId"].val();
+        value["pointTime"] = time(NULL);
+
+        auto iter = core::user_id.find(name);
+        if(iter == core::user_id.end())
+            continue;
+        auto& id = iter->second;
+
+        auto it = core::user_track.find(name);
+        if(it == core::user_track.end())
+            continue;
+        auto& track = it->second;
+
+        json::Value point(json::Value::OBJECT);
+        point["userId"] = id;
+        point["trackTime"] = track;
+        json::Value arr(json::Value::ARRAY);
+        arr.ArrayAdd(value);
+        point["trackPoint"] = arr;
+
+        std::string snd_dat = point.ToString();
+        PointAdd(snd_dat);
     }
 }
 //---------------------------------------------------------------------------
@@ -107,121 +136,37 @@ int main(int argc, char* argv[])
 
     std::cout << "ADS-B 解析程序启动，ip:" << SRV_IP << " port:" << SRV_PORT << std::endl;
 
-
-    const char* path = "/home/archilleu/workspace/absd/ADS-B/test/file/adsb.txt";
-    FILE* fp = fopen(path, "r");
-    if(nullptr == fp)
+    int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if(sockfd == -1)
     {
-        std::cout << "读取文件失败" << std::endl;
-        return -1;
+        perror("Creating socket failed.\n");
+        exit(1);
+    }
+    struct sockaddr_in server;
+    bzero(&server, sizeof(server));
+    server.sin_family = AF_INET;
+    server.sin_port = htons(SRV_UDP_PORT);
+    server.sin_addr.s_addr = htonl(INADDR_ANY);
+    if(bind(sockfd, reinterpret_cast<struct sockaddr *>(&server), sizeof(server)) == -1)
+    {
+        perror("Bind() error.\n");
+        exit(1);
     }
 
-    char line[1024];
-    char buffer[1024];
-    char data[1024];
-    int prefix = 10;
-    int idx = 0;
-    while(!feof(fp))
+    struct sockaddr_in client;
+    socklen_t len = sizeof(client);
+    char buf[1024];
+    while(1)
     {
-        fgets(line, sizeof(line), fp);
-        if('\t' != line[0])
+        ssize_t num = recvfrom(sockfd, buf, sizeof(buf), 0, reinterpret_cast<struct sockaddr *>(&client), &len);
+        if(num < 0)
         {
-            if(0 == idx)
-                continue;
-
-            int true_len = 0;
-            for(int i=0,j=0; i<idx; i++)
-            {
-                if(' ' == buffer[i])
-                    continue;
-
-                data[j++] = buffer[i];
-                true_len++;
-            }
-            std::cout << "len:" << true_len << " data:" << data << std::endl;
-            DoAction(data, true_len);
-            idx = 0;
+            perror("recvfrom() error.\n");
             continue;
         }
-        else
-        {
-            if(0 == idx)
-            {
-                char* begin = strstr(line, "1500");
-                if(nullptr == begin)
-                    continue;
 
-                char* end = strstr(line, "\n");
-                assert(end);
-
-                auto size = static_cast<int>(end - begin);
-                memcpy(buffer, begin, size);
-                idx += size;
-            }
-            else
-            {
-                char* begin = line + prefix;
-                char* end = strstr(line, "\n");
-                auto size = static_cast<int>(end - begin);
-                memcpy(buffer+idx, begin, size);
-                idx += size;
-            }
-        }
-
+        DoAction(buf, static_cast<int>(num));
     }
-    fclose(fp);
-    getchar();
-
-
-    do
-    {
-        for(auto& item : name_datas)
-        {
-            auto& name = item.first;
-            auto& list = item.second;
-            if(list.empty())
-                continue;
-
-            auto val = *list.begin();
-            list.pop_front();
-            val["pointTime"] = time(NULL);
-
-            auto iter = core::user_id.find(name);
-            if(iter == core::user_id.end())
-                continue;
-            auto& id = iter->second;
-
-            auto it = core::user_track.find(name);
-            if(it == core::user_track.end())
-                continue;
-            auto& track = it->second;
-
-            json::Value point(json::Value::OBJECT);
-            point["userId"] = id;
-            point["trackTime"] = track;
-            json::Value arr(json::Value::ARRAY);
-            arr.ArrayAdd(val);
-            point["trackPoint"] = arr;
-
-            std::string snd_dat = point.ToString();
-            PointAdd(snd_dat);
-        }
-
-        sleep(1);
-
-        bool finished = true;
-        for(auto& item : name_datas)
-        {
-            if(!item.second.empty())
-            {
-                finished = false;
-                break;
-            }
-        }
-
-        if(finished)
-            break;
-    } while(true);
 
     getchar();
     return 0;
